@@ -4,8 +4,8 @@ from functools import lru_cache
 
 class Settings(BaseSettings):
     # MongoDB
-    mongodb_url: str = "mongodb://localhost:27017"
-    mongodb_db_name: str = "city_insights"
+    mongodb_url: str = ""
+    mongodb_db_name: str = "city"
 
     # External APIs
     openweather_api_key: str = ""
