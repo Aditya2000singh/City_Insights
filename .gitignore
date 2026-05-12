@@ -1,0 +1,62 @@
+# ============================================================
+#  .gitignore — Global City Insights Dashboard
+# ============================================================
+
+# ── Environment & Secrets ────────────────────────────────────
+.env
+*.env
+!.env.example
+
+# ── Python ───────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pyc
+.Python
+
+# ── Virtual Environment ──────────────────────────────────────
+venv/
+env/
+.venv/
+.env/
+ENV/
+
+# ── Distribution / Build ─────────────────────────────────────
+build/
+dist/
+*.egg-info/
+*.egg
+.eggs/
+wheels/
+
+# ── Testing ──────────────────────────────────────────────────
+.pytest_cache/
+.coverage
+htmlcov/
+*.coveragerc
+.tox/
+
+# ── IDE & Editors ────────────────────────────────────────────
+.vscode/
+.idea/
+*.iml
+*.suo
+*.user
+*.sublime-project
+*.sublime-workspace
+.DS_Store
+Thumbs.db
+
+# ── Logs ─────────────────────────────────────────────────────
+*.log
+logs/
+
+# ── Uploads / Generated Files ────────────────────────────────
+app/static/img/uploads/
+*.tmp
+
+# ── MyPy ─────────────────────────────────────────────────────
+.mypy_cache/
+.dmypy.json
+dmypy.json

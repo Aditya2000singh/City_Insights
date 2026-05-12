@@ -1,0 +1,93 @@
+{% if not labels %}
+<div class="no-trend-data">
+  <p>📭 No historical data yet for {{ city.name }}. Check back after a few minutes.</p>
+</div>
+{% else %}
+
+<div class="chart-wrapper">
+  <canvas id="trend-chart-{{ city.id }}-{{ days }}" height="200"></canvas>
+</div>
+
+<script>
+(function() {
+  const ctx = document.getElementById('trend-chart-{{ city.id }}-{{ days }}').getContext('2d');
+
+  const labels = {{ labels | tojson }};
+  // Sample to at most 50 points for readability
+  const step = Math.max(1, Math.floor(labels.length / 50));
+  const sampledLabels = labels.filter((_, i) => i % step === 0);
+  const sampledTemps  = {{ temps  | tojson }}.filter((_, i) => i % step === 0);
+  const sampledAQIs   = {{ aqis   | tojson }}.filter((_, i) => i % step === 0);
+  const sampledPM25   = {{ pm25s  | tojson }}.filter((_, i) => i % step === 0);
+
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: sampledLabels,
+      datasets: [
+        {
+          label: 'Temp (°C)',
+          data: sampledTemps,
+          borderColor: '#f97316',
+          backgroundColor: 'rgba(249,115,22,0.08)',
+          tension: 0.4,
+          fill: true,
+          pointRadius: 2,
+          yAxisID: 'yTemp',
+        },
+        {
+          label: 'AQI Index',
+          data: sampledAQIs,
+          borderColor: '#8b5cf6',
+          backgroundColor: 'rgba(139,92,246,0.08)',
+          tension: 0.4,
+          fill: false,
+          pointRadius: 2,
+          yAxisID: 'yAQI',
+        },
+        {
+          label: 'PM2.5 (µg/m³)',
+          data: sampledPM25,
+          borderColor: '#06b6d4',
+          backgroundColor: 'rgba(6,182,212,0.08)',
+          tension: 0.4,
+          fill: false,
+          pointRadius: 2,
+          yAxisID: 'yAQI',
+        },
+      ]
+    },
+    options: {
+      responsive: true,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { position: 'top', labels: { font: { family: 'Space Grotesk' } } },
+        tooltip: { callbacks: {
+          label: ctx => {
+            const unit = ctx.dataset.label.includes('Temp') ? '°C' :
+                         ctx.dataset.label.includes('PM')   ? ' µg/m³' : '';
+            return ` ${ctx.dataset.label}: ${ctx.parsed.y ?? 'N/A'}${unit}`;
+          }
+        }}
+      },
+      scales: {
+        x: {
+          ticks: { maxTicksLimit: 8, font: { family: 'JetBrains Mono', size: 10 } },
+          grid: { color: 'rgba(0,0,0,0.05)' }
+        },
+        yTemp: {
+          type: 'linear', position: 'left',
+          title: { display: true, text: 'Temperature (°C)', font: { family: 'Space Grotesk' } },
+          grid: { color: 'rgba(0,0,0,0.05)' }
+        },
+        yAQI: {
+          type: 'linear', position: 'right',
+          title: { display: true, text: 'AQI / PM2.5', font: { family: 'Space Grotesk' } },
+          grid: { drawOnChartArea: false }
+        },
+      }
+    }
+  });
+})();
+</script>
+{% endif %}

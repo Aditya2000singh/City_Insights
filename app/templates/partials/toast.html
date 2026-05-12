@@ -1,0 +1,88 @@
+<!--
+  toast.html
+  HTMX out-of-band partial for toast notifications.
+  Swap it into #toast via hx-swap-oob="true" from any server response,
+  OR call window.showToast("message") from JS directly.
+
+  Server-side usage (in any route that wants to push a toast):
+    return templates.TemplateResponse("partials/toast.html", {
+        "request": request,
+        "toast_message": "Data refreshed!",
+        "toast_type": "success",   # success | error | info | warning
+    })
+  Then add  hx-swap-oob="true"  to the outermost div.
+-->
+
+{% set toast_type = toast_type | default("info") %}
+
+{% set icon_map = {
+  "success": "✅",
+  "error":   "❌",
+  "warning": "⚠️",
+  "info":    "ℹ️",
+} %}
+
+{% set color_map = {
+  "success": "#34d399",
+  "error":   "#f87171",
+  "warning": "#fbbf24",
+  "info":    "#4f8ef7",
+} %}
+
+<div
+  id="toast"
+  hx-swap-oob="true"
+  class="toast toast--{{ toast_type }}"
+  style="border-left: 3px solid {{ color_map[toast_type] }};"
+  _="on load wait 3s then add .toast--hide then wait 0.3s then add .hidden"
+>
+  <span class="toast-icon">{{ icon_map[toast_type] }}</span>
+  <span class="toast-msg">{{ toast_message }}</span>
+  <button class="toast-close" onclick="this.parentElement.classList.add('hidden')">✕</button>
+</div>
+
+<style>
+/* Toast styles — complement styles.css */
+.toast {
+  position: fixed;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  z-index: 3000;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.65rem 1rem;
+  font-size: 0.85rem;
+  box-shadow: var(--shadow);
+  animation: toastIn 0.25s ease forwards;
+  max-width: 360px;
+}
+.toast.hidden { display: none !important; }
+
+@keyframes toastIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.toast--hide {
+  animation: toastOut 0.3s ease forwards;
+}
+@keyframes toastOut {
+  to { opacity: 0; transform: translateY(12px); }
+}
+
+.toast-icon { font-size: 1rem; flex-shrink: 0; }
+.toast-msg  { flex: 1; line-height: 1.4; }
+.toast-close {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 0.75rem;
+  padding: 0;
+  flex-shrink: 0;
+}
+.toast-close:hover { color: var(--text); }
+</style>

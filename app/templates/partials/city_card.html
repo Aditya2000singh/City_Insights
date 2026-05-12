@@ -1,0 +1,107 @@
+<!--
+  city_card.html
+  HTMX partial — rendered as a lightweight summary card in the sidebar.
+  Triggered via hx-get="/city/{id}/card" if you want live sidebar previews.
+  Currently used as a standalone include inside city lists.
+-->
+
+{% set weather = snap.weather if snap and snap.weather else None %}
+{% set aqi = snap.aqi if snap and snap.aqi else None %}
+{% set aqi_meta = aqi_meta if aqi_meta else None %}
+
+<div class="city-card" id="card-{{ city.id }}">
+
+  <div class="city-card-header">
+    <div class="city-card-name">{{ city.name }}</div>
+    <div class="city-card-country">{{ city.country }}</div>
+  </div>
+
+  <div class="city-card-metrics">
+
+    <!-- Temperature pill -->
+    {% if weather %}
+    <div class="card-pill temp-pill">
+      <span class="pill-icon">🌡️</span>
+      <span class="pill-value">{{ "%.0f"|format(weather.temp_c) }}°C</span>
+    </div>
+    {% else %}
+    <div class="card-pill muted-pill">
+      <span class="pill-icon">🌡️</span>
+      <span class="pill-value">—</span>
+    </div>
+    {% endif %}
+
+    <!-- AQI pill -->
+    {% if aqi and aqi.aqi and aqi_meta %}
+    <div class="card-pill aqi-pill" style="background: {{ aqi_meta.bg }}; color: {{ aqi_meta.color }};">
+      <span class="pill-icon">💨</span>
+      <span class="pill-value">{{ aqi_meta.label }}</span>
+    </div>
+    {% else %}
+    <div class="card-pill muted-pill">
+      <span class="pill-icon">💨</span>
+      <span class="pill-value">—</span>
+    </div>
+    {% endif %}
+
+    <!-- Currency pill -->
+    {% if snap and snap.currency %}
+    <div class="card-pill currency-pill">
+      <span class="pill-icon">💱</span>
+      <span class="pill-value">{{ snap.currency.code }}</span>
+    </div>
+    {% endif %}
+
+  </div>
+
+  {% if snap and snap.fetched_at %}
+  <div class="city-card-ts">
+    Updated {{ snap.fetched_at.strftime("%H:%M UTC") }}
+  </div>
+  {% endif %}
+
+</div>
+
+<style>
+/* Scoped card styles — extend base styles.css */
+.city-card {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.75rem 1rem;
+  transition: border-color 0.2s;
+}
+.city-card:hover { border-color: var(--accent); }
+
+.city-card-header { margin-bottom: 0.5rem; }
+.city-card-name   { font-size: 0.9rem; font-weight: 600; }
+.city-card-country{ font-size: 0.72rem; color: var(--text-muted); }
+
+.city-card-metrics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-bottom: 0.4rem;
+}
+
+.card-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.2rem 0.55rem;
+  border-radius: 100px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+.muted-pill { color: var(--text-muted); }
+.temp-pill  { color: #f97316; border-color: rgba(249,115,22,0.3); }
+.currency-pill { color: var(--accent); border-color: rgba(79,142,247,0.3); }
+
+.city-card-ts {
+  font-size: 0.65rem;
+  font-family: var(--font-mono);
+  color: var(--text-muted);
+}
+</style>

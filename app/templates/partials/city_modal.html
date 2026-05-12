@@ -1,0 +1,166 @@
+{% set weather = snap.weather if snap and snap.weather else None %}
+{% set aqi = snap.aqi if snap and snap.aqi else None %}
+{% set currency = snap.currency if snap and snap.currency else None %}
+{% set fetched_at = snap.fetched_at if snap else None %}
+
+<div class="modal-inner">
+
+  <!-- Modal Header -->
+  <div class="modal-header">
+    <div class="modal-title-group">
+      <h2 class="modal-city-name">{{ city.name }}</h2>
+      <span class="modal-country">{{ city.country }}</span>
+    </div>
+    <button class="modal-close" onclick="closeModal()">✕</button>
+  </div>
+
+  {% if not snap %}
+  <!-- No data yet -->
+  <div class="modal-no-data">
+    <p>⏳ Data is being fetched. Please wait 30 seconds and try again.</p>
+  </div>
+
+  {% else %}
+
+  <!-- Last Updated -->
+  <div class="modal-timestamp">
+    🕐 Last updated:
+    {% if fetched_at %}
+      <strong>{{ fetched_at.strftime("%d %b %Y, %H:%M:%S UTC") }}</strong>
+    {% else %}
+      <strong>Unknown</strong>
+    {% endif %}
+  </div>
+
+  <!-- Top Cards Row -->
+  <div class="modal-cards">
+
+    <!-- Weather Card -->
+    <div class="metric-card weather-card">
+      <div class="card-label">🌡️ Temperature</div>
+      {% if weather %}
+        <div class="temp-gauge">
+          <div class="temp-value">{{ "%.1f"|format(weather.temp_c) }}°C</div>
+          <div class="temp-feels">Feels like {{ "%.1f"|format(weather.feels_like_c) }}°C</div>
+          <!-- SVG Thermometer gauge -->
+          <svg class="gauge-svg" viewBox="0 0 100 20" xmlns="http://www.w3.org/2000/svg">
+            <rect x="0" y="7" width="100" height="6" rx="3" fill="#e2e8f0"/>
+            {% set pct = [(weather.temp_c + 10) / 50 * 100, 0]|max %}
+            {% set pct = [pct, 100]|min %}
+            <rect x="0" y="7" width="{{ pct }}" height="6" rx="3"
+              fill="{% if weather.temp_c < 10 %}#60a5fa{% elif weather.temp_c < 25 %}#34d399{% else %}#f87171{% endif %}"/>
+          </svg>
+          <div class="weather-desc">
+            <img src="https://openweathermap.org/img/wn/{{ weather.icon }}.png" alt="{{ weather.description }}" />
+            {{ weather.description }}
+          </div>
+        </div>
+      {% else %}
+        <div class="no-data-label">No weather data</div>
+      {% endif %}
+    </div>
+
+    <!-- AQI Card -->
+    <div class="metric-card aqi-card" {% if aqi_meta %}style="border-left: 4px solid {{ aqi_meta.color }};"{% endif %}>
+      <div class="card-label">💨 Air Quality (AQI)</div>
+      {% if aqi and aqi.aqi %}
+        <div class="aqi-badge" style="background:{{ aqi_meta.bg }}; color:{{ aqi_meta.color }};">
+          {{ aqi.aqi }} — {{ aqi_meta.label }}
+        </div>
+      {% else %}
+        <div class="no-data-label">No AQI data</div>
+      {% endif %}
+    </div>
+
+    <!-- Currency Card -->
+    <div class="metric-card currency-card">
+      <div class="card-label">💱 Currency vs ₹ INR</div>
+      {% if currency %}
+        <div class="currency-value">
+          1 {{ currency.code }} =
+          <strong>₹ {{ "%.2f"|format(currency.rate_to_inr) }}</strong>
+        </div>
+        <div class="currency-sub">{{ city.currency_name }}</div>
+      {% else %}
+        <div class="no-data-label">No currency data</div>
+      {% endif %}
+    </div>
+
+  </div>
+
+  <!-- Full Data Table -->
+  <div class="modal-section">
+    <h3 class="section-title">📊 All Metrics</h3>
+    <table class="data-table">
+      <thead>
+        <tr><th>Metric</th><th>Value</th></tr>
+      </thead>
+      <tbody>
+        {% if weather %}
+        <tr><td>Temperature</td><td>{{ "%.1f"|format(weather.temp_c) }} °C</td></tr>
+        <tr><td>Feels Like</td><td>{{ "%.1f"|format(weather.feels_like_c) }} °C</td></tr>
+        <tr><td>Humidity</td><td>{{ weather.humidity }} %</td></tr>
+        <tr><td>Pressure</td><td>{{ weather.pressure }} hPa</td></tr>
+        <tr><td>Wind Speed</td><td>{{ weather.wind_speed }} m/s</td></tr>
+        <tr><td>Condition</td><td>{{ weather.description }}</td></tr>
+        {% endif %}
+        {% if aqi %}
+        <tr><td>AQI Index (WHO)</td><td>{{ aqi.aqi if aqi.aqi else "N/A" }}</td></tr>
+        <tr><td>PM2.5</td><td>{{ "%.2f"|format(aqi.pm25) if aqi.pm25 else "N/A" }} µg/m³</td></tr>
+        <tr><td>PM10</td><td>{{ "%.2f"|format(aqi.pm10) if aqi.pm10 else "N/A" }} µg/m³</td></tr>
+        <tr><td>CO</td><td>{{ "%.2f"|format(aqi.co) if aqi.co else "N/A" }} µg/m³</td></tr>
+        <tr><td>NO₂</td><td>{{ "%.2f"|format(aqi.no2) if aqi.no2 else "N/A" }} µg/m³</td></tr>
+        {% endif %}
+        {% if currency %}
+        <tr><td>Currency</td><td>{{ city.currency_name }} ({{ currency.code }})</td></tr>
+        <tr><td>1 {{ currency.code }} in INR</td><td>₹ {{ "%.4f"|format(currency.rate_to_inr) }}</td></tr>
+        {% endif %}
+        <tr><td>Coordinates</td><td>{{ city.lat }}, {{ city.lon }}</td></tr>
+        <tr><td>Timezone</td><td>{{ city.timezone }}</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Trend Chart Section (lazy loaded via HTMX) -->
+  <div class="modal-section">
+    <div class="trend-header">
+      <h3 class="section-title">📈 Historical Trends</h3>
+      <div class="trend-tabs">
+        <button
+          class="trend-tab active"
+          hx-get="/city/{{ city.id }}/trend?days=7"
+          hx-target="#trend-area"
+          hx-swap="innerHTML"
+          onclick="setActiveTab(this)"
+        >7 Days</button>
+        <button
+          class="trend-tab"
+          hx-get="/city/{{ city.id }}/trend?days=15"
+          hx-target="#trend-area"
+          hx-swap="innerHTML"
+          onclick="setActiveTab(this)"
+        >15 Days</button>
+      </div>
+    </div>
+
+    <div
+      id="trend-area"
+      hx-get="/city/{{ city.id }}/trend?days=7"
+      hx-trigger="load"
+      hx-swap="innerHTML"
+    >
+      <div class="trend-loading">
+        <div class="spinner"></div>
+        <span>Loading trend data...</span>
+      </div>
+    </div>
+  </div>
+
+  {% endif %}
+</div>
+
+<script>
+// Show modal after HTMX swaps the content
+document.getElementById('modal-overlay').classList.remove('hidden');
+document.body.style.overflow = 'hidden';
+</script>

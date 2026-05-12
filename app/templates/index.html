@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block title %}Global City Insights — Live Dashboard{% endblock %}
+
+{% block content %}
+<div class="dashboard">
+
+  <!-- Left Sidebar: City List -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <h2>10 Cities</h2>
+      <span class="city-count">{{ cities|length }}</span>
+    </div>
+    <ul class="city-list" id="city-list">
+      {% for city in cities %}
+      <li
+        class="city-item"
+        id="sidebar-{{ city.id }}"
+        hx-get="/city/{{ city.id }}/modal"
+        hx-target="#modal-content"
+        hx-swap="innerHTML"
+        hx-indicator="#modal-spinner"
+        onclick="focusCity('{{ city.id }}', {{ city.lat }}, {{ city.lon }})"
+      >
+        <div class="city-item-name">{{ city.name }}</div>
+        <div class="city-item-country">{{ city.country }}</div>
+        <div class="city-item-currency">{{ city.currency_code }}</div>
+      </li>
+      {% endfor %}
+    </ul>
+  </aside>
+
+  <!-- Map Area -->
+  <div class="map-wrapper">
+    <div id="map"></div>
+
+    <!-- Map overlay: loading indicator -->
+    <div id="map-loading" class="map-loading hidden">
+      <div class="spinner"></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- City data for JS map markers -->
+<script>
+  window.CITIES = [
+    {% for city in cities %}
+    {
+      id: "{{ city.id }}",
+      name: "{{ city.name }}",
+      country: "{{ city.country }}",
+      lat: {{ city.lat }},
+      lon: {{ city.lon }},
+      currency: "{{ city.currency_code }}"
+    }{% if not loop.last %},{% endif %}
+    {% endfor %}
+  ];
+</script>
+{% endblock %}
