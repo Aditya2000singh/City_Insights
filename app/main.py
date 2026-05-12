@@ -12,7 +12,7 @@ from app.api.cities import router as cities_router
 async def lifespan(app: FastAPI):
     # Startup
     await init_db()
-    start_scheduler()
+    #start_scheduler()
     yield
     # Shutdown
     stop_scheduler()
